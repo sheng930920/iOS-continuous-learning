@@ -19,217 +19,237 @@ import CoreBluetooth
 
 class ViewController: UIViewController {
     
+    // 中心管理者
     var centralManager :CBCentralManager!
+    // 外设
     var peripheral: CBPeripheral?
+    // 外设数组
+    var peripherals: [CBPeripheral]!
+    // 表格展示所有可连接设备
+    var tabView : UITableView!
     
-    @IBAction func startBLE() {
-
-        // 1.初始化中心管理者
-        self.centralManager = CBCentralManager(delegate: self, queue: DispatchQueue.main, options: nil)
-    }
-    
-    @IBAction func stopConnect() {
-
-        self.yf_cMgr(central: self.centralManager, stopConnectWithPeripheral: self.peripheral!)
+    // 断开链接
+    @IBAction func disConnect(_ sender: Any) {
+        
+        self.centralManager.cancelPeripheralConnection(self.peripheral!)
+        
+        self.title = "已断开" + (self.peripheral!.name)!
+        
+        self.peripheral = nil
     }
     
     override func viewDidLoad() {
+        
         super.viewDidLoad()
-       
+        
+        self.peripherals = []
+        
+        tabView = UITableView(frame: self.view.frame)
+        
+        tabView.dataSource = self
+        
+        tabView.delegate = self
+        
+        self.view.addSubview(self.tabView)
+        
+        // 初始化中心管理者
+        self.centralManager = CBCentralManager(delegate: self, queue: DispatchQueue.main, options: nil)
     }
 }
 
+// MARK:- UITableViewDataSource, UITableViewDelegate
+extension ViewController: UITableViewDataSource, UITableViewDelegate {
+    
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+       
+        return  self.peripherals.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        var cell = tableView.dequeueReusableCell(withIdentifier: "ble")
+        
+        if cell == nil {
+            
+            cell = UITableViewCell(style: .default, reuseIdentifier: "ble")
+            
+        }
+        
+        // 展示所有可连接的设备
+        cell?.textLabel?.text = self.peripherals[indexPath.row].name
+        
+        return cell!
+        
+        
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        self.title =  "已连上" + (self.peripherals[indexPath.row].name)!
+        
+        // 连接想要的外设
+        let selPeripheral = self.peripherals[indexPath.row]
+        
+        self.peripheral = selPeripheral
+        
+        //调用connect就会回调代理中连接外设结果的方法
+        self.centralManager.connect(self.peripheral!, options: nil)
+    }
+    
+}
+
+
+// MARK:- CBCentralManagerDelegate
 extension ViewController: CBCentralManagerDelegate
 {
-    // 2.监听CBCentralManager的状态(模拟器永远不会是On)
+    // 监听CBCentralManager的状态
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
-   
-        switch central.state {
-        case .poweredOff:
-            print("PoweredOff")
-        case .poweredOn:
-            print("PoweredOn")
-            // 3.搜索外设.会触发 centralManager:didDiscoverPeripheral:advertisementData:RSSI:
-            central.scanForPeripherals(withServices: nil, options: nil)
-        case .resetting:
-            print("Resetting")
-        case .unsupported:
-            // 使用模拟器会打印此处
-            print("Unsupported")
-        default:
-            print("others")
-        }
-    }
-    
-    // 4.发现外设
-    private func centralManager(central: CBCentralManager, didDiscoverPeripheral peripheral: CBPeripheral, advertisementData: [String : AnyObject], RSSI: NSNumber) {
-        print("central: \(central), peripheral: \(peripheral), adv: \(advertisementData), RSSI: \(RSSI)")
         
-        // 一般会根据advertisementData来过滤出我们想要连接的外设(当然,信号强度RSSI也可以作为过滤凭据)
-        /**
-         ["kCBAdvDataManufacturerData": <570100ae fcda4d72 8ea10132 3c4dafc4 22aec402 880f1060 8b1d>, "kCBAdvDataIsConnectable": 1, "kCBAdvDataServiceUUIDs": <__NSArrayM 0x1545560e0>(
-         FEE0,
-         FEE7
-         )
-         , "kCBAdvDataServiceData": {
-         FEE0 = <54080000>;
-         }, "kCBAdvDataLocalName": MI]
-         */
-        let advRecName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
-        if (advRecName!.contains("MI"))
-        {
-            print("advRecName: \(String(describing: advRecName)) success")
-            // 5.连接想要的外设
-            // 5.1.停止扫描
-            central.stopScan()
-            //self.start = false
-            // 5.2.存储外设
-            self.peripheral = peripheral
-            // 5.3.连接这个外设
-            central.connect(self.peripheral!, options: nil)
+        // 蓝牙打开的时候进行扫描
+        if central.state == .poweredOn {
+            // 传入nil，那么就是扫描所有可以发现的设备
+            central.scanForPeripherals(withServices: nil, options: nil)
+        }
+        
+    }
+    
+    
+     // 搜索后发现外设就会回调该方法
+    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
+        
+        if !self.peripherals.contains(peripheral) {
             
-        }else
-        {
-            print(advRecName)
+            self.peripherals?.append(peripheral)
+            // 刷新表格
+            self.tabView.reloadData()
         }
     }
     
     
-    // 6.连接外设的结果
-    // 6.1 连接成功
-    func centralManager(central: CBCentralManager, didConnectPeripheral peripheral: CBPeripheral) {
-        //
+    // 连接外设的结果
+    // 1 连接成功
+    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        
         print("didConnectPeripheral")
+        
         peripheral.delegate = self
-        // 7. 与外设信息进行分析交互
+        // 发现服务
         peripheral.discoverServices(nil)
     }
     
-    // 6.2 连接失败
+    // 2 连接失败
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        
         print("didFailToConnectPeripheral")
     }
     
-    // 6.3 丢失连接(手动取消调用/ 每信号了也调用)
+    // 3 丢失连接
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         //
         print("didDisconnectPeripheral")
     }
     
-    // 自定义的取消连接方法
-    func yf_cMgr(central: CBCentralManager,stopConnectWithPeripheral peripheral: CBPeripheral) -> ()
-    {
-        central.stopScan()
-        central.cancelPeripheralConnection(peripheral)
-    }
 }
 
 extension ViewController: CBPeripheralDelegate
 {
-    // 7.1 外设发现服务
+    // 外设发现服务
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard error == nil else
         {
-            print("didDiscoverServices : \(error)")
+            print("didDiscoverServices : \(String(describing: error))")
             return
         }
         
         for service in peripheral.services! {
-            // 7.2 外设检索服务中的每一个特征 peripheral:didDiscoverCharacteristicsForService
+            // 外设检索服务中的每一个特征 peripheral:didDiscoverCharacteristicsForService
             peripheral.discoverCharacteristics(nil, for: service)
         }
     }
     
-    // 7.3 外设发现服务中的特征
+    // 外设发现服务中的特征
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard error == nil else
         {
-            print("didDiscoverCharacteristicsForService : \(error)")
+            print("didDiscoverCharacteristicsForService : \(String(describing: error))")
             return
         }
         
-        print(service.characteristics!.count)
         for character in service.characteristics! {
-            // 7.4 外设检索特征的描述  peripheral:didDiscoverDescriptorsForCharacteristic:error:
+            // 外设检索特征的描述  peripheral:didDiscoverDescriptorsForCharacteristic:error:
             peripheral.discoverDescriptors(for: character)
             
-            // 判断如果特征的UUID是 2B4A,那就对其进行订阅
-            if character.uuid.isEqual(CBUUID(string: "2B4A"))
-            {
-                self.yf_Per(peripheral: peripheral, setNotifyValueForCharacteristic: character)
-                
-            }
-            
-            // 7.5 外设读取特征的值
+            // 外设读取特征的值
             guard character.properties.contains(.read) else
             {
                 print("character.properties must contains read")
                 // 如果是只读的特征,那就跳过本条进行下一个遍历
                 continue
             }
-            print("note guard")
-            // peripheral:didUpdateValueForCharacteristic:error:
+            // 会调用 peripheral:didUpdateValueForCharacteristic:error:
             peripheral.readValue(for: character)
         }
     }
     
-    // 7.6 外设发现了特征中的描述
+    // 外设发现了特征中的描述
     func peripheral(_ peripheral: CBPeripheral, didDiscoverDescriptorsFor characteristic: CBCharacteristic, error: Error?) {
         //
         guard error == nil else
         {
-            print("didDiscoverDescriptorsForCharacteristic : \(error)")
+            print("didDiscoverDescriptorsForCharacteristic : \(String(describing: error))")
             return
         }
         
         for des in characteristic.descriptors! {
             print("characteristic: \(characteristic) .des  :\(des)")
-            // peripheral:didUpdateValueForDescriptor:error: method
+            // 会调用  peripheral:didUpdateValueForDescriptor:error:
             peripheral.readValue(for: des)
+            // 订阅 会调用 peripheral:didUpdateNotificationStateFor:error:
+            //peripheral.setNotifyValue(true, for: des)
         }
     }
     
-    // 7.7 更新特征value
+    // 更新特征value
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard error == nil else
         {
-            print("didUpdateValueForCharacteristic : \(error)")
+            print("didUpdateValueForCharacteristic : \(String(describing: error))")
             return
         }
         
         print("\(characteristic.description) didUpdateValueForCharacteristic")
     }
     
-    func yfPer(peripheral: CBPeripheral, writeData data: NSData, forCharacteristic characteristic: CBCharacteristic) -> () {
-        //外设写输入进特征
-        guard characteristic.properties.contains(.write) else
+    // 订阅特征值
+    func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        
+        guard error == nil else
         {
-            print("characteristic.properties must contains Write")
+            print("didUpdateNotificationStateFor : \(String(describing: error))")
             return
         }
-        // 会触发peripheral:didWriteValueForCharacteristic:error:
-        peripheral.writeValue(data as Data, for: characteristic, type: CBCharacteristicWriteType.withResponse)
         
-        
-    }
-    // 订阅与取消订阅
-    func yf_Per(peripheral: CBPeripheral, setNotifyValueForCharacteristic characteristic: CBCharacteristic) -> () {
-        guard characteristic.properties.contains(.notify) else
-        {
-            print("characteristic.properties must contains notify")
-            return
-        }
-        // peripheral:didUpdateNotificationStateForCharacteristic:error:
-        peripheral.setNotifyValue(true, for: characteristic)
+        print("\(characteristic.description) didUpdateNotificationStateFor")
     }
     
-    func yf_Per(peripheral: CBPeripheral, canleNotifyValueForCharacteristic characteristic: CBCharacteristic) -> () {
-        guard characteristic.properties.contains(.notify) else
+    
+    
+    // 更新描述value
+    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor descriptor: CBDescriptor, error: Error?) {
+        
+        guard error == nil else
         {
-            print("characteristic.properties must contains notify")
+            print("didUpdateValueForDescriptor : \(String(describing: error))")
             return
         }
-        peripheral.setNotifyValue(false, for: characteristic)
+        
+        print("\(descriptor.description) didUpdateValueForDescriptor")
+        
     }
+    
+    
 }
 
