@@ -13,8 +13,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
-        let info = "设备名称:\(DeviceInfo.yf_getDeviceName())，CPU类型:\(DeviceInfo.yf_getDeviceCpuType())，核心数:\(DeviceInfo.yf_getDeviceCpuCount())，运营商:\(DeviceInfo.yf_getDeviceSupplier())，当前IP:\(DeviceInfo.yf_getDeviceIP()!)"
+        let info = "设备名称:\(DeviceInfo.yf_getDeviceName())，运行系统:\(DeviceInfo.yf_getDeviceSystemName()) \(DeviceInfo.yf_getDeviceSystemVersion())，CPU类型:\(DeviceInfo.yf_getDeviceCpuType())，核心数:\(DeviceInfo.yf_getDeviceCpuCount())，运营商:\(DeviceInfo.yf_getDeviceSupplier())，当前IP:\(DeviceInfo.yf_getDeviceIP())"
         
         
         let alertController = UIAlertController(title: "当前设备信息",
