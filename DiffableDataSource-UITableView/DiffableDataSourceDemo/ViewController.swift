@@ -1,11 +1,3 @@
-//
-//  ViewController.swift
-//  DiffableDataSourceDemo
-//
-//  Created by 杨帆 on 2020/5/29.
-//  Copyright © 2020 杨帆. All rights reserved.
-//
-
 import UIKit
 
 
@@ -15,32 +7,59 @@ enum Section: CaseIterable {
 
 class ViewController: UIViewController {
     
-    let cityNames = ["北京", "南京", "西安", "杭州", "苏州", "南通", "南阳", "苏州", "泰山", "黄山", "广州", "芜湖", "巢湖", "锦州", "湖州", "北海", "海口",  "安庆", "安顺"]
+    let cityNames = ["北京", "南京", "西安", "杭州", "南通", "南阳", "苏州", "泰山", "黄山", "广州", "芜湖", "巢湖", "锦州", "湖州", "北海", "海口",  "安庆", "安顺"]
     
     @IBOutlet weak var tableView: UITableView!
     
-    var cities: [City] = []
+    var cities: [City] = [City]()
     
-var dataSource: UITableViewDiffableDataSource<Section, City>!
-
-override func viewDidLoad() {
-    super.viewDidLoad()
+    var dataSource: UITableViewDiffableDataSource<Section, City>!
     
-    for name in cityNames {
-        cities.append(City(name: name))
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        for name in cityNames {
+            cities.append(City(name: name))
+        }
+        
+        dataSource = UITableViewDiffableDataSource
+            <Section, City>(tableView: tableView) {
+                (tableView: UITableView, indexPath: IndexPath,
+                city: City) -> UITableViewCell? in
+                let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+                cell.textLabel?.text = city.name
+                return cell
+        }
+        
+        dataSource.defaultRowAnimation = .fade
     }
     
-    dataSource = UITableViewDiffableDataSource
-        <Section, City>(tableView: tableView) {
-            (tableView: UITableView, indexPath: IndexPath,
-            city: City) -> UITableViewCell? in
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-            cell.textLabel?.text = city.name
-            return cell
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        // 改
+        //cities = [City(name: "AA")]
+        
+        // 增
+        //cities.append(City(name: "AA"))
+        
+        // 删
+        // cities.remove(at: 0)
+        
+        cities.remove(at: 0)
+        cities.insert(City(name: "BB"), at: 0)
+        
+        // 直接获取不行
+        //var snapshot = dataSource.snapshot()
+        // 必须创建一个新的
+        var snapshot = NSDiffableDataSourceSnapshot<Section, City>()
+        
+        snapshot.appendSections([.main])
+        
+        snapshot.appendItems(cities, toSection: .main)
+        
+        dataSource.apply(snapshot)
     }
-    
-    dataSource.defaultRowAnimation = .fade
-}
     
     
     // 刚开始需要显示所有数据
@@ -59,15 +78,18 @@ override func viewDidLoad() {
             filteredCities = cities
         }
         
-var snapshot = NSDiffableDataSourceSnapshot<Section, City>()
-
-snapshot.appendSections([.main])
-
-snapshot.appendItems(filteredCities, toSection: .main)
-
-dataSource.apply(snapshot, animatingDifferences: true)
+        var snapshot = NSDiffableDataSourceSnapshot<Section, City>()
+        
+        snapshot.appendSections([.main])
+        
+        snapshot.appendItems(filteredCities, toSection: .main)
+        
+        dataSource.apply(snapshot, animatingDifferences: true)
+        
     }
 }
+
+
 
 extension ViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
