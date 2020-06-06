@@ -26,6 +26,8 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.collectionView.collectionViewLayout = generateLayout()
+        
         for name in cityNames {
             cities.append(City(name: name))
         }
@@ -40,6 +42,27 @@ class ViewController: UIViewController {
                 
                 cell?.cityLb.text = city.name
                 return cell
+        }
+        
+        // 注册SupplementaryView
+        collectionView.register(
+            BadgeView.self,
+            forSupplementaryViewOfKind: "badge",
+            withReuseIdentifier: BadgeView.reuseIdentifier)
+        
+        // 设置SupplementaryView
+        dataSource.supplementaryViewProvider = {
+            (collectionView: UICollectionView, kind: String, indexPath: IndexPath)
+            -> UICollectionReusableView? in
+        
+            if let badgeView = collectionView.dequeueReusableSupplementaryView(
+                ofKind: kind,
+                withReuseIdentifier: BadgeView.reuseIdentifier,
+                for: indexPath) as? BadgeView {
+                return badgeView
+            } else {
+                fatalError("Cannot create Supplementary")
+            }
         }
     }
     
@@ -73,6 +96,50 @@ class ViewController: UIViewController {
 extension ViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         performSearch(searchQuery: searchText)
+    }
+}
+
+extension ViewController {
+    func generateLayout() -> UICollectionViewCompositionalLayout {
+        //1 构造Item的NSCollectionLayoutSize
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(0.25),
+            heightDimension: .fractionalHeight(1.0))
+        
+        // 2 构造NSCollectionLayoutItem
+        //let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let badgeAnchor = NSCollectionLayoutAnchor(edges: [.top, .trailing],
+        fractionalOffset: CGPoint(x: 0.5, y: -0.4))
+
+        let badgeSize = NSCollectionLayoutSize(widthDimension: .absolute(16),
+        heightDimension: .absolute(16))
+
+        let badge = NSCollectionLayoutSupplementaryItem(layoutSize: badgeSize, elementKind: "badge", containerAnchor: badgeAnchor)
+
+        let item = NSCollectionLayoutItem(layoutSize: itemSize, supplementaryItems: [badge])
+        
+        item.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        
+        // 3 构造Group的NSCollectionLayoutSize
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalWidth(0.1))
+        
+        // 4 构造NSCollectionLayoutGroup
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            subitems: [item])
+        
+        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
+        
+        // 5 构造NSCollectionLayoutSection
+        let section = NSCollectionLayoutSection(group: group)
+    
+        // 6 构造UICollectionViewCompositionalLayout
+        let layout = UICollectionViewCompositionalLayout(section: section)
+        
+        return layout
     }
 }
 

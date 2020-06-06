@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3C61C7A9248B9041000D9172 /* BadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C61C7A8248B9041000D9172 /* BadgeView.swift */; };
 		3CAEC6122481139000C66454 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAEC6112481139000C66454 /* AppDelegate.swift */; };
 		3CAEC6142481139000C66454 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAEC6132481139000C66454 /* SceneDelegate.swift */; };
 		3CAEC6162481139000C66454 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAEC6152481139000C66454 /* ViewController.swift */; };
@@ -37,6 +38,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3C61C7A8248B9041000D9172 /* BadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeView.swift; sourceTree = "<group>"; };
 		3CAEC60E2481139000C66454 /* DiffableDataSourceDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiffableDataSourceDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAEC6112481139000C66454 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3CAEC6132481139000C66454 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				3CAEC61F2481139100C66454 /* Info.plist */,
 				3CAEC643248113BF00C66454 /* City.swift */,
 				3CAEC64524811C6000C66454 /* CityCollectionViewCell.swift */,
+				3C61C7A8248B9041000D9172 /* BadgeView.swift */,
 			);
 			path = DiffableDataSourceDemo;
 			sourceTree = "<group>";
@@ -265,6 +268,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C61C7A9248B9041000D9172 /* BadgeView.swift in Sources */,
 				3CAEC644248113BF00C66454 /* City.swift in Sources */,
 				3CAEC6162481139000C66454 /* ViewController.swift in Sources */,
 				3CAEC6122481139000C66454 /* AppDelegate.swift in Sources */,
