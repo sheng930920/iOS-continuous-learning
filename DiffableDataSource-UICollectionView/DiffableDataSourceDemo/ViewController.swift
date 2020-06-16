@@ -54,7 +54,7 @@ class ViewController: UIViewController {
         dataSource.supplementaryViewProvider = {
             (collectionView: UICollectionView, kind: String, indexPath: IndexPath)
             -> UICollectionReusableView? in
-        
+            
             if let badgeView = collectionView.dequeueReusableSupplementaryView(
                 ofKind: kind,
                 withReuseIdentifier: BadgeView.reuseIdentifier,
@@ -110,13 +110,13 @@ extension ViewController {
         //let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
         let badgeAnchor = NSCollectionLayoutAnchor(edges: [.top, .trailing],
-        fractionalOffset: CGPoint(x: 0.5, y: -0.4))
-
+                                                   fractionalOffset: CGPoint(x: 0.5, y: -0.4))
+        
         let badgeSize = NSCollectionLayoutSize(widthDimension: .absolute(16),
-        heightDimension: .absolute(16))
-
+                                               heightDimension: .absolute(16))
+        
         let badge = NSCollectionLayoutSupplementaryItem(layoutSize: badgeSize, elementKind: "badge", containerAnchor: badgeAnchor)
-
+        
         let item = NSCollectionLayoutItem(layoutSize: itemSize, supplementaryItems: [badge])
         
         item.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -135,7 +135,7 @@ extension ViewController {
         
         // 5 构造NSCollectionLayoutSection
         let section = NSCollectionLayoutSection(group: group)
-    
+        
         // 6 构造UICollectionViewCompositionalLayout
         let layout = UICollectionViewCompositionalLayout(section: section)
         
@@ -150,4 +150,24 @@ extension ViewController: UICollectionViewDelegate {
             print("选择了\(city.name)")
         }
     }
+    
+func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+    
+    // 第一个
+    let favorite = UIAction(title: "Favorite", image: UIImage(systemName: "heart.fill")) { action in
+        print("favorite")
+    }
+    
+    let share = UIAction(title: "Share", image: UIImage(systemName: "square.and.arrow.up.fill")) { action in
+        print("share")
+    }
+    
+    let delete = UIAction(title: "Delete", image: UIImage(systemName: "trash.fill"), attributes: [.destructive]) { action in
+        print("delete")
+    }
+    
+    return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+        UIMenu(title: "Actions", children: [favorite, share, delete])
+    }
+}
 }
